@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+motor
+pydantic>=2.0.0
+pydantic-settings
