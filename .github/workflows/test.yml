@@ -9,6 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.11
@@ -21,5 +26,7 @@ jobs:
         pip install -r requirements.txt
         pip install pytest httpx
     - name: Run tests
+      env:
+        PYTHONPATH: .
       run: |
         pytest
