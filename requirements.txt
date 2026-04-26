@@ -3,3 +3,7 @@ uvicorn
 motor
 pydantic>=2.0.0
 pydantic-settings
+slowapi
+pytest
+pytest-asyncio
+httpx

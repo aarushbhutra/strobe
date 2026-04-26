@@ -17,8 +17,8 @@ async def test_lifespan_connects_to_mongo():
     assert db.database.client is None
     assert db.database.db is None
     
-    # Starting the app using TestClient triggers the lifespan
-    with TestClient(app):
+    # Starting the app using lifespan_context runs it in the current loop
+    async with app.router.lifespan_context(app):
         # Now the client and db should be initialized
         assert db.database.client is not None
         assert db.database.db is not None

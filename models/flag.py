@@ -80,3 +80,43 @@ class AuditLog(BaseModel):
     before: Optional[dict] = None
     after: Optional[dict] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+# --- DTOs ---
+
+class FlagCreate(BaseModel):
+    """What the client sends when creating a flag."""
+    key: str = Field(pattern=r"^[a-z0-9][a-z0-9\-_]*$")
+    name: str
+    description: Optional[str] = None
+    enabled: bool = True
+    variants: List[Variant] = Field(default_factory=list)
+    targeting_rules: List[TargetingRule] = Field(default_factory=list)
+    rollout: RolloutConfig = Field(default_factory=RolloutConfig)
+    tags: List[str] = Field(default_factory=list)
+
+
+class FlagUpdate(BaseModel):
+    """All fields optional — for PATCH. Only send what you want to change."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    enabled: Optional[bool] = None
+    variants: Optional[List[Variant]] = None
+    targeting_rules: Optional[List[TargetingRule]] = None
+    rollout: Optional[RolloutConfig] = None
+    tags: Optional[List[str]] = None
+
+
+class FlagSummary(BaseModel):
+    """Lightweight version for list endpoints — no full variant/rule payloads."""
+    id: str
+    key: str
+    name: str
+    description: Optional[str] = None
+    enabled: bool
+    tags: List[str] = Field(default_factory=list)
+    variant_count: int = 0
+    rule_count: int = 0
+    rollout_percentage: float = 100.0
+    created_at: datetime
+    updated_at: datetime
