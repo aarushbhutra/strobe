@@ -27,5 +27,6 @@ jobs:
     - name: Run tests
       env:
         PYTHONPATH: .
+        RATE_LIMIT_ENABLED: "false"
       run: |
         pytest

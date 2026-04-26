@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # Abuse prevention
     MAX_FLAGS: int = 10_000
     FLAG_TTL_DAYS: int = 90
+    RATE_LIMIT_ENABLED: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", populate_by_name=True, extra="ignore")
 
