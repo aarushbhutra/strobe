@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudSync — Powered by Strobe Feature Flags</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff;
+      --text: #0f0f0f;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --green: #10b981;
+      --yellow: #f59e0b;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── PROMO BANNER ── */
+    #promoBanner {
+      display: none;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      color: white;
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    #promoBanner a { color: white; text-decoration: underline; }
+    body.has-promo #promoBanner { display: block; }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 48px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    .logo { font-size: 18px; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--muted); }
+    .nav-links a { text-decoration: none; color: inherit; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); }
+    .beta-tag { display: none; background: #fef3c7; color: #92400e; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; vertical-align: middle; margin-left: 4px; }
+    body.has-beta-nav .beta-tag { display: inline; }
+    .nav-cta { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; font-family: inherit; }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── HERO ── */
+    #hero {
+      padding: 96px 48px 80px;
+      text-align: center;
+      background: linear-gradient(160deg, #f8f7ff 0%, #ffffff 60%);
+      transition: background 0.4s;
+    }
+    body.dark-hero #hero {
+      background: linear-gradient(160deg, #0f0f1a 0%, #1a1033 100%);
+      color: white;
+    }
+    body.dark-hero #hero .subtitle { color: #a78bfa; }
+    body.dark-hero #hero .hero-muted { color: #9ca3af; }
+    .eyebrow { display: inline-block; background: #ede9fe; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; margin-bottom: 20px; }
+    body.dark-hero .eyebrow { background: #2d1b69; color: #a78bfa; }
+    h1 { font-size: clamp(36px, 5vw, 60px); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; max-width: 800px; margin: 0 auto 20px; }
+    .subtitle { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto 36px; line-height: 1.6; }
+    .hero-muted { color: var(--muted); }
+    .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 14px 28px; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; font-family: inherit; box-shadow: 0 4px 20px rgba(99,102,241,0.35); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(99,102,241,0.45); }
+    .btn-secondary { background: transparent; color: var(--text); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 28px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: border-color 0.15s; }
+    body.dark-hero .btn-secondary { color: white; border-color: #374151; }
+    .btn-secondary:hover { border-color: var(--accent); }
+    .social-proof { margin-top: 40px; color: var(--muted); font-size: 13px; }
+    .avatars { display: inline-flex; margin-right: 8px; }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; margin-left: -8px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: white; }
+
+    /* ── FEATURES ── */
+    #features { padding: 80px 48px; background: #fafafa; }
+    #features h2 { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+    #features .section-sub { text-align: center; color: var(--muted); font-size: 16px; margin-bottom: 48px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 960px; margin: 0 auto; }
+    .feature-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── NEW PRICING (beta) ── */
+    #newPricing {
+      display: none;
+      padding: 80px 48px;
+      background: linear-gradient(160deg, #0f0f1a, #1a1033);
+      color: white;
+      text-align: center;
+    }
+    body.has-new-pricing #newPricing { display: block; }
+    #newPricing h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+    #newPricing .section-sub { color: #9ca3af; margin-bottom: 40px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 760px; margin: 0 auto; }
+    .pricing-card { border: 1px solid #2d2d4a; border-radius: 12px; padding: 28px; text-align: left; }
+    .pricing-card.featured { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+    .plan-name { font-size: 13px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; }
+    .plan-price { font-size: 40px; font-weight: 800; margin: 8px 0; }
+    .plan-price span { font-size: 16px; color: #9ca3af; font-weight: 400; }
+    .plan-features { list-style: none; margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .plan-features li { font-size: 13px; color: #d1d5db; }
+    .plan-features li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+    .new-tag { background: #fbbf24; color: #1a1033; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+
+    /* ── OLD PRICING ── */
+    #oldPricing { padding: 80px 48px; text-align: center; }
+    #oldPricing h2 { font-size: 32px; font-weight: 800; margin-bottom: 40px; }
+    .simple-price { font-size: 48px; font-weight: 800; color: var(--accent); }
+    .simple-price span { font-size: 18px; color: var(--muted); }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { padding: 80px 48px; background: #fafafa; }
+    #testimonials h2 { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 40px; }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+    .testimonial { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .testimonial p { font-size: 14px; line-height: 1.7; color: var(--muted); margin-bottom: 16px; }
+    .testimonial .author { font-size: 13px; font-weight: 700; }
+
+    /* ── FOOTER ── */
+    footer { padding: 32px 48px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    footer .copy { font-size: 13px; color: var(--muted); }
+    footer a { color: var(--accent); text-decoration: none; font-size: 13px; }
+
+    /* ── DEBUG PANEL ── */
+    #debugPanel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 320px;
+      background: #0f0f0f;
+      color: #e5e5e5;
+      border-radius: 12px;
+      border: 1px solid #2a2a2a;
+      font-size: 12px;
+      z-index: 999;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .debug-header {
+      padding: 10px 14px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2a2a2a;
+      cursor: pointer;
+    }
+    .debug-header span { font-weight: 700; font-size: 11px; letter-spacing: 0.5px; color: #a78bfa; }
+    .debug-body { padding: 12px 14px; max-height: 280px; overflow-y: auto; }
+    .debug-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #1a1a1a; }
+    .debug-row:last-child { border-bottom: none; }
+    .debug-key { font-family: monospace; color: #9ca3af; flex: 1; }
+    .debug-val { font-weight: 700; }
+    .debug-val.ab { color: #a78bfa; }
+    .debug-val.on { color: #4ade80; }
+    .debug-val.off { color: #f87171; }
+    .debug-reason { font-size: 10px; color: #6b6b6b; font-family: monospace; }
+    .debug-uid { font-family: monospace; font-size: 10px; color: #6b6b6b; margin-bottom: 8px; }
+    .debug-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .debug-actions button { flex: 1; background: #2a2a2a; border: none; color: #e5e5e5; padding: 5px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; font-family: inherit; }
+    .debug-actions button:hover { background: #3a3a3a; }
+    .debug-loading { color: #6b6b6b; text-align: center; padding: 12px; }
+    .debug-collapsed .debug-body { display: none; }
+    .strobe-badge { display: inline-block; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 4px; padding: 2px 6px; font-size: 10px; color: #a78bfa; font-family: monospace; }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 20px; }
+      #hero { padding: 60px 20px; }
+      #features, #newPricing, #oldPricing, #testimonials { padding: 60px 20px; }
+      footer { padding: 24px 20px; }
+      #debugPanel { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Controlled by: promo-banner flag -->
+<div id="promoBanner">
+  🎉 Limited time: 3 months free on any plan. <a href="#">Claim offer →</a>
+</div>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16"><path d="M8 2L2 6v8h4v-4h4v4h4V6z"/></svg>
+    </div>
+    CloudSync
+  </div>
+  <div class="nav-links">
+    <a href="#">Features</a>
+    <a href="#">Pricing</a>
+    <!-- Controlled by: beta-nav flag -->
+    <a href="#">Labs <span class="beta-tag">BETA</span></a>
+    <a href="#">Docs</a>
+  </div>
+  <button class="nav-cta" id="navCta">Get Started</button>
+</nav>
+
+<!-- hero-style controls dark vs light, hero-cta controls button text -->
+<section id="hero">
+  <div class="eyebrow">✦ Now with AI-powered sync</div>
+  <h1 id="heroHeadline">Your files,<br>everywhere you need them.</h1>
+  <p class="subtitle hero-muted">CloudSync keeps your team's work in perfect harmony across every device, every timezone, every workflow.</p>
+  <div class="cta-group">
+    <!-- Controlled by: cta-variant flag -->
+    <button class="btn-primary" id="heroCta">Start Free Trial</button>
+    <button class="btn-secondary">See how it works</button>
+  </div>
+  <div class="social-proof">
+    <span class="avatars">
+      <span class="avatar" style="background:#6366f1">A</span>
+      <span class="avatar" style="background:#8b5cf6">B</span>
+      <span class="avatar" style="background:#ec4899">C</span>
+      <span class="avatar" style="background:#10b981">D</span>
+    </span>
+    Trusted by <strong>12,000+</strong> teams worldwide
+  </div>
+</section>
+
+<section id="features">
+  <h2>Everything your team needs</h2>
+  <p class="section-sub">Built for speed, reliability, and the way modern teams actually work.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Instant Sync</h3>
+      <p>Changes propagate across all your devices in under 200ms. No waiting, no conflicts.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>End-to-End Encryption</h3>
+      <p>Your files are encrypted before they leave your device. We can't read your data — and neither can anyone else.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧩</div>
+      <h3>Integrations</h3>
+      <p>Connect with Slack, GitHub, Figma, Notion, and 200+ other tools your team already uses.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Analytics</h3>
+      <p>See who accessed what, when, and where. Full audit trail for compliance and peace of mind.</p>
+    </div>
+  </div>
+</section>
+
+<!-- new-pricing flag: show this instead of old pricing -->
+<section id="newPricing">
+  <h2>Simple, transparent pricing <span class="new-tag">NEW</span></h2>
+  <p class="section-sub">Scale as you grow. Cancel anytime.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">$0<span>/mo</span></div>
+      <ul class="plan-features">
+        <li>5 GB storage</li>
+        <li>3 team members</li>
+        <li>Basic integrations</li>
+      </ul>
+    </div>
+    <div class="pricing-card featured">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$12<span>/mo per user</span></div>
+      <ul class="plan-features">
+        <li>Unlimited storage</li>
+        <li>Unlimited members</li>
+        <li>All integrations</li>
+        <li>Priority support</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-price">Custom</div>
+      <ul class="plan-features">
+        <li>SSO & SAML</li>
+        <li>SLA guarantee</li>
+        <li>Dedicated support</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Shown when new-pricing flag is OFF -->
+<section id="oldPricing">
+  <h2>Simple pricing</h2>
+  <div class="simple-price">$9 <span>/ user / month</span></div>
+  <p style="color:var(--muted);margin-top:16px;font-size:15px">Everything included. No surprises.</p>
+</section>
+
+<section id="testimonials">
+  <h2>Loved by teams</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial">
+      <p>"CloudSync replaced three different tools for us. Our team's productivity went up 40% in the first month."</p>
+      <div class="author">Sarah K. — CTO, Refract Labs</div>
+    </div>
+    <div class="testimonial">
+      <p>"Finally a sync tool that just works. We've had zero incidents in 18 months of use."</p>
+      <div class="author">Marcus T. — Engineering Lead, Vanta</div>
+    </div>
+    <div class="testimonial">
+      <p>"The integrations are incredible. It plugged right into our existing Slack and GitHub workflows."</p>
+      <div class="author">Priya N. — Product Manager, Relay</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="copy">© 2026 CloudSync Inc. · Powered by <a href="https://strobeapi-production.up.railway.app/docs" target="_blank">Strobe</a> feature flags</div>
+  <a href="https://strobeapi-production.up.railway.app/docs" target="_blank">API Docs →</a>
+</footer>
+
+<!-- Strobe Debug Panel -->
+<div id="debugPanel">
+  <div class="debug-header" onclick="toggleDebug()">
+    <span>⚑ STROBE FLAGS</span>
+    <span id="debugToggleIcon">▾</span>
+  </div>
+  <div class="debug-body">
+    <div class="debug-loading">Evaluating flags...</div>
+  </div>
+</div>
+
+<script>
+const API = 'https://strobeapi-production.up.railway.app';
+
+// Deterministic-ish user ID per browser session
+const userId = sessionStorage.getItem('strobe_uid') || (() => {
+  const id = 'user-' + Math.random().toString(36).slice(2, 10);
+  sessionStorage.setItem('strobe_uid', id);
+  return id;
+})();
+
+// Flag keys this demo uses
+const FLAG_KEYS = [
+  'promo-banner',
+  'beta-nav',
+  'hero-style',
+  'cta-variant',
+  'new-pricing',
+];
+
+// CTA copy variants
+const CTA_COPY = {
+  'start-free':    'Start Free Trial',
+  'get-started':   'Get Started Today',
+  'try-for-free':  'Try for Free →',
+};
+
+async function ensureFlags() {
+  // Create each flag if it doesn't exist. Ignore 409 (already exists).
+  const defs = [
+    { key: 'promo-banner', name: 'Promo Banner', enabled: true },
+    { key: 'beta-nav', name: 'Beta Nav Item', enabled: false },
+    { key: 'hero-style', name: 'Hero Style', enabled: true,
+      variants: [
+        { key: 'light', name: 'Light Hero', weight: 50 },
+        { key: 'dark',  name: 'Dark Hero',  weight: 50 },
+      ]},
+    { key: 'cta-variant', name: 'CTA Button Copy', enabled: true,
+      variants: [
+        { key: 'start-free',   name: 'Start Free Trial',   weight: 34 },
+        { key: 'get-started',  name: 'Get Started Today',  weight: 33 },
+        { key: 'try-for-free', name: 'Try for Free →',     weight: 33 },
+      ]},
+    { key: 'new-pricing', name: 'New Pricing Section', enabled: true },
+  ];
+
+  await Promise.all(defs.map(d =>
+    fetch(`${API}/flags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d),
+    })
+  ));
+}
+
+async function evaluateFlags() {
+  const r = await fetch(`${API}/evaluate/bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      context: { user_id: userId, attributes: {} },
+      flag_keys: FLAG_KEYS,
+    }),
+  });
+  if (!r.ok) throw new Error('Evaluate failed');
+  const data = await r.json();
+  return data.results;
+}
+
+function applyFlags(results) {
+  const get = (key) => results[key];
+
+  // promo-banner: simple on/off
+  const banner = get('promo-banner');
+  if (banner?.enabled) document.body.classList.add('has-promo');
+
+  // beta-nav: simple on/off
+  const betaNav = get('beta-nav');
+  if (betaNav?.enabled) document.body.classList.add('has-beta-nav');
+
+  // hero-style: light vs dark variant
+  const heroStyle = get('hero-style');
+  if (heroStyle?.enabled && heroStyle?.variant === 'dark') {
+    document.body.classList.add('dark-hero');
+  }
+
+  // cta-variant: 3-way A/B test on button copy
+  const ctaVariant = get('cta-variant');
+  if (ctaVariant?.enabled && ctaVariant?.variant) {
+    const copy = CTA_COPY[ctaVariant.variant] || 'Get Started';
+    document.getElementById('heroCta').textContent = copy;
+    document.getElementById('navCta').textContent = copy;
+  }
+
+  // new-pricing: show new section, hide old
+  const newPricing = get('new-pricing');
+  if (newPricing?.enabled) {
+    document.body.classList.add('has-new-pricing');
+    document.getElementById('oldPricing').style.display = 'none';
+  }
+}
+
+function renderDebug(results) {
+  const rows = FLAG_KEYS.map(key => {
+    const r = results[key];
+    if (!r) return `<div class="debug-row"><span class="debug-key">${key}</span><span class="debug-val off">missing</span></div>`;
+    const isAB = r.variant && r.reason === 'ab_assignment';
+    const valClass = isAB ? 'ab' : r.enabled ? 'on' : 'off';
+    const display = r.variant ?? (r.enabled ? 'ON' : 'OFF');
+    return `
+      <div class="debug-row">
+        <span class="debug-key">${key}</span>
+        <div>
+          <div class="debug-val ${valClass}">${display}</div>
+          <div class="debug-reason">${r.reason}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelector('#debugPanel .debug-body').innerHTML = `
+    <div class="debug-uid">uid: ${userId}</div>
+    ${rows}
+    <div class="debug-actions">
+      <button onclick="newSession()">New User</button>
+      <button onclick="window.open('${API}/docs','_blank')">API Docs</button>
+    </div>
+  `;
+}
+
+function newSession() {
+  sessionStorage.removeItem('strobe_uid');
+  location.reload();
+}
+
+function toggleDebug() {
+  document.getElementById('debugPanel').classList.toggle('debug-collapsed');
+  const icon = document.getElementById('debugToggleIcon');
+  icon.textContent = document.getElementById('debugPanel').classList.contains('debug-collapsed') ? '▸' : '▾';
+}
+
+async function init() {
+  try {
+    await ensureFlags();
+    const results = await evaluateFlags();
+    applyFlags(results);
+    renderDebug(results);
+  } catch(e) {
+    document.querySelector('#debugPanel .debug-body').innerHTML =
+      `<div style="color:#f87171;font-size:11px;padding:8px">Error: ${e.message}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
