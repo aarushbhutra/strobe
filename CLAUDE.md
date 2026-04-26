@@ -41,6 +41,9 @@ tests/
 | `MONGO_DB` | `strobe` | Database name |
 | `MAX_FLAGS` | `10000` | Global cap — 503 when exceeded |
 | `FLAG_TTL_DAYS` | `90` | Flags auto-deleted after N days of inactivity (TTL index on `updated_at`) |
+| `RATE_LIMIT_ENABLED` | `true` | Set `false` in tests/dev to skip rate limiting |
+| `API_KEY_ENABLED` | `false` | Set `true` to require `X-Api-Key` header on all flag/evaluate endpoints |
+| `API_KEY` | `None` | Secret key value. Only checked when `API_KEY_ENABLED=true` |
 
 ## Rate limits (slowapi, per IP)
 
@@ -51,6 +54,16 @@ tests/
 | Evaluate (`POST /evaluate/*`) | 120/minute |
 
 Rate limit exceeded returns HTTP 429.
+
+## Auth
+
+Controlled by two env vars:
+- `API_KEY_ENABLED=false` (default) — fully open, no header needed
+- `API_KEY_ENABLED=true` + `API_KEY=secret` — all `/flags` and `/evaluate` endpoints require `X-Api-Key: secret` header
+
+`/health` and `/` are always public. Swagger UI (`/docs`) shows the lock icon and allows entering the key for testing.
+
+Dependency lives in `api/auth.py`, applied at router level via `dependencies=[ApiKeyDep]`.
 
 ## Abuse prevention
 

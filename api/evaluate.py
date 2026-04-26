@@ -3,8 +3,9 @@ from models.evaluation import EvaluationContext, EvaluationResult, BulkEvaluatio
 import db.database as database
 from engine.evaluator import FlagEvaluator
 from api.limiter import limiter
+from api.auth import ApiKeyDep
 
-router = APIRouter(prefix="/evaluate", tags=["evaluate"])
+router = APIRouter(prefix="/evaluate", tags=["evaluate"], dependencies=[ApiKeyDep])
 evaluator = FlagEvaluator()
 
 

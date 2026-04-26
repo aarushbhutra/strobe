@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -10,6 +11,10 @@ class Settings(BaseSettings):
     MAX_FLAGS: int = 10_000
     FLAG_TTL_DAYS: int = 90
     RATE_LIMIT_ENABLED: bool = True
+
+    # API key auth (optional)
+    API_KEY_ENABLED: bool = False
+    API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", populate_by_name=True, extra="ignore")
 

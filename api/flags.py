@@ -1,12 +1,13 @@
 from typing import Annotated, List, Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 
+from api.auth import ApiKeyDep
 from api.limiter import limiter
 from config import settings
 from models.flag import FeatureFlag, FlagCreate, FlagUpdate, FlagSummary, AuditLog
 import db.database as database
 
-router = APIRouter(prefix="/flags", tags=["flags"])
+router = APIRouter(prefix="/flags", tags=["flags"], dependencies=[ApiKeyDep])
 
 
 @router.post("", response_model=FeatureFlag, status_code=201)
