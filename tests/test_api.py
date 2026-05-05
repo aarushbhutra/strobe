@@ -1,7 +1,10 @@
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
+
 from main import app
-import uuid
+
 
 # Provide a standard TestClient. TestClient automatically runs lifespan in a background thread.
 @pytest.fixture
@@ -11,7 +14,7 @@ def client():
 
 def test_create_and_get_flag(client):
     unique_key = f"test-flag-{uuid.uuid4().hex[:8]}"
-    
+
     # 1. Create flag
     create_payload = {
         "key": unique_key,
@@ -27,17 +30,17 @@ def test_create_and_get_flag(client):
     data = resp.json()
     assert data["key"] == unique_key
     assert data["enabled"] is True
-    
+
     # 2. Get flag
     resp = client.get(f"/flags/{unique_key}")
     assert resp.status_code == 200
     assert resp.json()["key"] == unique_key
-    
+
     # 3. List flags
     resp = client.get("/flags")
     assert resp.status_code == 200
     assert any(f["key"] == unique_key for f in resp.json())
-    
+
     # 4. Toggle flag
     resp = client.patch(f"/flags/{unique_key}/toggle")
     assert resp.status_code == 200
@@ -54,10 +57,10 @@ def test_create_and_get_flag(client):
     # It's disabled now, so reason should be disabled
     assert eval_data["enabled"] is False
     assert eval_data["reason"] == "disabled"
-    
+
     # Toggle back
     client.patch(f"/flags/{unique_key}/toggle")
-    
+
     # Evaluate again
     resp = client.post(f"/evaluate/{unique_key}", json=eval_payload)
     assert resp.status_code == 200
@@ -214,3 +217,29 @@ def test_variant_weights_must_sum_100_returns_400(client):
         ]
     })
     assert resp.status_code == 400
+
+
+@pytest.mark.skip(reason="TBD: event loop conflict between TestClient and Motor needs investigation")
+def test_global_flag_cap_returns_503(client, monkeypatch):
+    """When the global MAX_FLAGS cap is reached, creating a new flag returns 503."""
+    from api.limiter import limiter
+
+    # Disable rate limiting for this test to avoid interference
+    monkeypatch.setattr(limiter, "enabled", False)
+    limiter.reset()
+
+    # Count existing flags via the API, then set MAX_FLAGS just above that
+    resp = client.get("/flags", params={"limit": 100})
+    current_count = len(resp.json())
+    monkeypatch.setattr("config.settings.MAX_FLAGS", current_count + 1)
+
+    # Create one flag to hit the cap
+    key1 = f"cap-flag-{uuid.uuid4().hex[:8]}"
+    resp = client.post("/flags", json={"key": key1, "name": "One and Only"})
+    assert resp.status_code == 201
+
+    # Try to create a second flag — should be rejected
+    key2 = f"cap-flag-{uuid.uuid4().hex[:8]}"
+    resp = client.post("/flags", json={"key": key2, "name": "Should Not Work"})
+    assert resp.status_code == 503
+    assert "limit" in resp.json()["detail"].lower()

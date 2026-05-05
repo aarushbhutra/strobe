@@ -1,9 +1,15 @@
 from fastapi import APIRouter, HTTPException, Request
-from models.evaluation import EvaluationContext, EvaluationResult, BulkEvaluationRequest, BulkEvaluationResponse
+
 import db.database as database
-from engine.evaluator import FlagEvaluator
-from api.limiter import limiter
 from api.auth import ApiKeyDep
+from api.limiter import limiter
+from engine.evaluator import FlagEvaluator
+from models.evaluation import (
+    BulkEvaluationRequest,
+    BulkEvaluationResponse,
+    EvaluationContext,
+    EvaluationResult,
+)
 
 router = APIRouter(prefix="/evaluate", tags=["evaluate"], dependencies=[ApiKeyDep])
 evaluator = FlagEvaluator()

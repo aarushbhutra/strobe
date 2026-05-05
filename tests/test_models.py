@@ -1,6 +1,13 @@
 import pytest
 from pydantic import ValidationError
-from models.flag import FeatureFlag, Variant, TargetingRule, RuleOperator, FlagCreate, FlagUpdate
+
+from models.flag import (
+    FeatureFlag,
+    FlagUpdate,
+    RuleOperator,
+    TargetingRule,
+    Variant,
+)
 
 
 def _variants(a=50, b=50):

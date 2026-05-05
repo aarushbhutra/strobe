@@ -1,8 +1,9 @@
 import hashlib
-from typing import Dict, Any
+from typing import Any
 
-from models.flag import FeatureFlag, TargetingRule, RuleOperator
-from models.evaluation import EvaluationContext, EvaluationResult, EvaluationReason
+from models.evaluation import EvaluationContext, EvaluationReason, EvaluationResult
+from models.flag import FeatureFlag, RuleOperator, TargetingRule
+
 
 class FlagEvaluator:
     def _hash(self, seed: str) -> float:
@@ -11,14 +12,14 @@ class FlagEvaluator:
         hash_int = int(hash_hex, 16)
         return (hash_int / 0xFFFFFFFF) * 100.0
 
-    def _match_rule(self, rule: TargetingRule, attrs: Dict[str, Any]) -> bool:
+    def _match_rule(self, rule: TargetingRule, attrs: dict[str, Any]) -> bool:
         if rule.attribute not in attrs:
             return False
-            
+
         val = attrs[rule.attribute]
         op = rule.operator
         target = rule.value
-        
+
         try:
             if op == RuleOperator.eq:
                 return val == target
@@ -35,7 +36,7 @@ class FlagEvaluator:
         except TypeError:
             # Handle incompatible types for > and < gracefully
             return False
-            
+
         return False
 
     def evaluate(self, flag: FeatureFlag, context: EvaluationContext) -> EvaluationResult:
@@ -69,7 +70,7 @@ class FlagEvaluator:
         hash_attr = attrs.get(rollout.hash_key, context.user_id)
         # Convert to string just in case the hash attribute is int
         hash_attr_str = str(hash_attr)
-        
+
         rollout_seed = f"{flag.key}:rollout:{hash_attr_str}"
         rollout_score = self._hash(rollout_seed)
 
@@ -96,7 +97,7 @@ class FlagEvaluator:
                         reason=EvaluationReason.ab_assignment,
                         payload=variant.payload
                     )
-            
+
             # fallback for float precision edge cases
             last_variant = flag.variants[-1]
             return EvaluationResult(

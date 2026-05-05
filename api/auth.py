@@ -1,12 +1,13 @@
-from typing import Optional
+
 from fastapi import Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader
+
 from config import settings
 
 _api_key_header = APIKeyHeader(name="X-Api-Key", auto_error=False)
 
 
-def verify_api_key(api_key: Optional[str] = Security(_api_key_header)) -> None:
+def verify_api_key(api_key: str | None = Security(_api_key_header)) -> None:
     if not settings.API_KEY_ENABLED:
         return
     if not settings.API_KEY:

@@ -1,11 +1,12 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
+
 from fastapi import APIRouter, HTTPException, Query, Request
 
+import db.database as database
 from api.auth import ApiKeyDep
 from api.limiter import limiter
 from config import settings
-from models.flag import FeatureFlag, FlagCreate, FlagUpdate, FlagSummary, AuditLog
-import db.database as database
+from models.flag import AuditLog, FeatureFlag, FlagCreate, FlagSummary, FlagUpdate
 
 router = APIRouter(prefix="/flags", tags=["flags"], dependencies=[ApiKeyDep])
 
@@ -17,7 +18,10 @@ async def create_flag(request: Request, flag_in: FlagCreate):
     if total >= settings.MAX_FLAGS:
         raise HTTPException(
             status_code=503,
-            detail=f"Global flag limit of {settings.MAX_FLAGS} reached. Old flags auto-expire after {settings.FLAG_TTL_DAYS} days of inactivity.",
+            detail=(
+                f"Global flag limit of {settings.MAX_FLAGS} reached. "
+                f"Old flags auto-expire after {settings.FLAG_TTL_DAYS} days of inactivity."
+            ),
         )
 
     existing = await database.flags.get_by_key(flag_in.key)
@@ -27,7 +31,7 @@ async def create_flag(request: Request, flag_in: FlagCreate):
     try:
         new_flag = FeatureFlag(**flag_in.model_dump())
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     await database.flags.create(new_flag)
 
@@ -39,12 +43,12 @@ async def create_flag(request: Request, flag_in: FlagCreate):
     return new_flag
 
 
-@router.get("", response_model=List[FlagSummary])
+@router.get("", response_model=list[FlagSummary])
 @limiter.limit("60/minute")
 async def list_flags(
     request: Request,
-    tags: Annotated[Optional[List[str]], Query()] = None,
-    enabled: Annotated[Optional[bool], Query()] = None,
+    tags: Annotated[list[str] | None, Query()] = None,
+    enabled: Annotated[bool | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     skip: Annotated[int, Query(ge=0)] = 0,
 ):
@@ -86,7 +90,7 @@ async def update_flag(request: Request, key: str, update_in: FlagUpdate):
     try:
         updated = await database.flags.update(key, update_in)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     if not updated:
         raise HTTPException(status_code=404, detail="Flag not found")
@@ -119,7 +123,7 @@ async def toggle_flag(request: Request, key: str):
     return updated
 
 
-@router.get("/{key}/history", response_model=List[AuditLog])
+@router.get("/{key}/history", response_model=list[AuditLog])
 @limiter.limit("60/minute")
 async def get_flag_history(
     request: Request,

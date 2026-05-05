@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from main import app
+
 import db.database
+from main import app
 
 client = TestClient(app)
 
@@ -16,13 +17,13 @@ async def test_lifespan_connects_to_mongo():
     # Verify that the lifespan manages the connection
     assert db.database.client is None
     assert db.database.db is None
-    
+
     # Starting the app using lifespan_context runs it in the current loop
     async with app.router.lifespan_context(app):
         # Now the client and db should be initialized
         assert db.database.client is not None
         assert db.database.db is not None
-        
+
         # Test a quick ping to see if connection is real
         ping_response = await db.database.db.command("ping")
         assert ping_response["ok"] == 1.0

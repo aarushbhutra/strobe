@@ -1,8 +1,6 @@
-import pytest
-from models.flag import FeatureFlag, Variant, TargetingRule, RolloutConfig, RuleOperator
-from models.evaluation import EvaluationContext, EvaluationReason
 from engine.evaluator import FlagEvaluator
-
+from models.evaluation import EvaluationContext, EvaluationReason
+from models.flag import FeatureFlag, RolloutConfig, RuleOperator, TargetingRule, Variant
 
 evaluator = FlagEvaluator()
 

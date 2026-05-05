@@ -1,6 +1,7 @@
-from enum import Enum
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from enum import Enum
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -14,13 +15,13 @@ class EvaluationReason(str, Enum):
 
 class EvaluationContext(BaseModel):
     user_id: str
-    attributes: Dict[str, Any] = Field(default_factory=dict)
+    attributes: dict[str, Any] = Field(default_factory=dict)
 
 
 class EvaluationResult(BaseModel):
     flag_key: str
     enabled: bool
-    variant: Optional[str] = None
+    variant: str | None = None
     reason: EvaluationReason
     payload: dict = Field(default_factory=dict)
     evaluated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -28,8 +29,8 @@ class EvaluationResult(BaseModel):
 
 class BulkEvaluationRequest(BaseModel):
     context: EvaluationContext
-    flag_keys: List[str] = Field(default_factory=list)
+    flag_keys: list[str] = Field(default_factory=list)
 
 
 class BulkEvaluationResponse(BaseModel):
-    results: Dict[str, EvaluationResult] = Field(default_factory=dict)
+    results: dict[str, EvaluationResult] = Field(default_factory=dict)

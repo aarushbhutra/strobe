@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorClient
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from motor.motor_asyncio import AsyncIOMotorClient
-from config import settings
-from api.limiter import limiter
+
 import db.database as database
+from api.limiter import limiter
+from config import settings
 
 
 @asynccontextmanager
@@ -30,7 +32,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Strobe",
-    description="Free, open feature flag & A/B testing service. Rate limits: 10 writes/min, 60 reads/min, 120 evaluations/min per IP.",
+    description=(
+        "Free, open feature flag & A/B testing service. "
+        "Rate limits: 10 writes/min, 60 reads/min, 120 evaluations/min per IP."
+    ),
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -45,8 +50,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from api.flags import router as flags_router
-from api.evaluate import router as evaluate_router
+from api.evaluate import router as evaluate_router  # noqa: E402
+from api.flags import router as flags_router  # noqa: E402
 
 app.include_router(flags_router)
 app.include_router(evaluate_router)

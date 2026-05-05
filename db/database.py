@@ -1,5 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from db.repository import FlagRepository, AuditRepository
+
+from db.repository import AuditRepository, FlagRepository
 
 # These will be initialized in the lifespan context manager
 client: AsyncIOMotorClient | None = None

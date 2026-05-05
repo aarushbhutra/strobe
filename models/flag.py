@@ -1,8 +1,10 @@
-from enum import Enum
-from typing import Any, List, Optional
-from datetime import datetime
-from pydantic import BaseModel, Field, model_validator
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field, model_validator
+
 
 class RuleOperator(str, Enum):
     eq = "eq"
@@ -38,12 +40,12 @@ class FeatureFlag(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     key: str = Field(pattern=r"^[a-z0-9][a-z0-9\-_]*$")
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     enabled: bool = True
-    variants: List[Variant] = Field(default_factory=list)
-    targeting_rules: List[TargetingRule] = Field(default_factory=list)
+    variants: list[Variant] = Field(default_factory=list)
+    targeting_rules: list[TargetingRule] = Field(default_factory=list)
     rollout: RolloutConfig = Field(default_factory=RolloutConfig)
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -55,12 +57,12 @@ class FeatureFlag(BaseModel):
             # using math.isclose or round to handle float precision, simplest is round
             if round(total_weight, 5) != 100.0:
                 raise ValueError("Variant weights must sum to 100")
-        
+
         # 2. Variant keys must be unique within a flag
         variant_keys = [v.key for v in self.variants]
         if len(variant_keys) != len(set(variant_keys)):
             raise ValueError("Variant keys must be unique")
-            
+
         # 3. Targeting rules must reference variant keys that actually exist on the flag
         if self.targeting_rules and self.variants:
             valid_keys = set(variant_keys)
@@ -77,8 +79,8 @@ class AuditLog(BaseModel):
     flag_key: str
     action: str
     changed_by: str = "system"
-    before: Optional[dict] = None
-    after: Optional[dict] = None
+    before: dict | None = None
+    after: dict | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -88,23 +90,23 @@ class FlagCreate(BaseModel):
     """What the client sends when creating a flag."""
     key: str = Field(pattern=r"^[a-z0-9][a-z0-9\-_]*$")
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     enabled: bool = True
-    variants: List[Variant] = Field(default_factory=list)
-    targeting_rules: List[TargetingRule] = Field(default_factory=list)
+    variants: list[Variant] = Field(default_factory=list)
+    targeting_rules: list[TargetingRule] = Field(default_factory=list)
     rollout: RolloutConfig = Field(default_factory=RolloutConfig)
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
 
 class FlagUpdate(BaseModel):
     """All fields optional — for PATCH. Only send what you want to change."""
-    name: Optional[str] = None
-    description: Optional[str] = None
-    enabled: Optional[bool] = None
-    variants: Optional[List[Variant]] = None
-    targeting_rules: Optional[List[TargetingRule]] = None
-    rollout: Optional[RolloutConfig] = None
-    tags: Optional[List[str]] = None
+    name: str | None = None
+    description: str | None = None
+    enabled: bool | None = None
+    variants: list[Variant] | None = None
+    targeting_rules: list[TargetingRule] | None = None
+    rollout: RolloutConfig | None = None
+    tags: list[str] | None = None
 
 
 class FlagSummary(BaseModel):
@@ -112,9 +114,9 @@ class FlagSummary(BaseModel):
     id: str
     key: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     enabled: bool
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     variant_count: int = 0
     rule_count: int = 0
     rollout_percentage: float = 100.0

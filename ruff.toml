@@ -1,0 +1,20 @@
+# ruff configuration for Strobe
+target-version = "py311"
+line-length = 120
+
+exclude = [
+    ".agent/",
+    ".claude/",
+    ".github/skills/",
+    ".bmad/",
+    "_bmad/",
+    "_bmad-output/",
+]
+
+[lint]
+select = ["E", "F", "I", "N", "W", "B", "C4", "SIM", "UP"]
+ignore = ["UP042"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

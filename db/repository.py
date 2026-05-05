@@ -1,8 +1,10 @@
-from typing import List, Optional, Any
 from datetime import datetime
+
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from models.flag import FeatureFlag, FlagUpdate, FlagSummary, AuditLog
+
+from models.flag import AuditLog, FeatureFlag, FlagSummary, FlagUpdate
+
 
 class AuditRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
@@ -11,7 +13,7 @@ class AuditRepository:
     async def log(self, entry: AuditLog):
         await self.collection.insert_one(entry.model_dump())
 
-    async def get_history(self, flag_key: str, limit: int = 50) -> List[AuditLog]:
+    async def get_history(self, flag_key: str, limit: int = 50) -> list[AuditLog]:
         cursor = self.collection.find({"flag_key": flag_key}).sort("timestamp", pymongo.DESCENDING).limit(limit)
         docs = await cursor.to_list(length=limit)
         return [AuditLog(**doc) for doc in docs]
@@ -36,13 +38,13 @@ class FlagRepository:
     async def create(self, flag: FeatureFlag):
         await self.collection.insert_one(flag.model_dump())
 
-    async def get_by_key(self, key: str) -> Optional[FeatureFlag]:
+    async def get_by_key(self, key: str) -> FeatureFlag | None:
         doc = await self.collection.find_one({"key": key})
         if doc:
             return FeatureFlag(**doc)
         return None
 
-    async def get_by_id(self, id: str) -> Optional[FeatureFlag]:
+    async def get_by_id(self, id: str) -> FeatureFlag | None:
         doc = await self.collection.find_one({"id": id})
         if doc:
             return FeatureFlag(**doc)
@@ -52,37 +54,43 @@ class FlagRepository:
         result = await self.collection.delete_one({"key": key})
         return result.deleted_count > 0
 
-    async def update(self, key: str, update_data: FlagUpdate) -> Optional[FeatureFlag]:
+    async def update(self, key: str, update_data: FlagUpdate) -> FeatureFlag | None:
         doc = await self.collection.find_one({"key": key})
         if not doc:
             return None
-            
+
         current_flag = FeatureFlag(**doc)
         update_dict = update_data.model_dump(exclude_unset=True)
-        
+
         current_dict = current_flag.model_dump()
         current_dict.update(update_dict)
         current_dict["updated_at"] = datetime.utcnow()
-        
+
         # Pydantic validation
         validated_flag = FeatureFlag(**current_dict)
-        
+
         await self.collection.update_one(
             {"key": key},
             {"$set": validated_flag.model_dump(exclude={"id", "key"})}
         )
         return validated_flag
 
-    async def list_all(self, tags: Optional[List[str]] = None, enabled: Optional[bool] = None, limit: int = 50, skip: int = 0) -> List[FlagSummary]:
+    async def list_all(
+        self,
+        tags: list[str] | None = None,
+        enabled: bool | None = None,
+        limit: int = 50,
+        skip: int = 0,
+    ) -> list[FlagSummary]:
         query = {}
         if tags:
             query["tags"] = {"$all": tags}
         if enabled is not None:
             query["enabled"] = enabled
-            
+
         cursor = self.collection.find(query).sort("updated_at", pymongo.DESCENDING).skip(skip).limit(limit)
         docs = await cursor.to_list(length=limit)
-        
+
         summaries = []
         for doc in docs:
             summaries.append(FlagSummary(
@@ -100,14 +108,14 @@ class FlagRepository:
             ))
         return summaries
 
-    async def get_many_by_keys(self, keys: List[str]) -> List[FeatureFlag]:
+    async def get_many_by_keys(self, keys: list[str]) -> list[FeatureFlag]:
         if not keys:
             return []
         cursor = self.collection.find({"key": {"$in": keys}})
         docs = await cursor.to_list(length=None)
         return [FeatureFlag(**doc) for doc in docs]
 
-    async def get_all_enabled(self) -> List[FeatureFlag]:
+    async def get_all_enabled(self) -> list[FeatureFlag]:
         cursor = self.collection.find({"enabled": True})
         docs = await cursor.to_list(length=None)
         return [FeatureFlag(**doc) for doc in docs]
