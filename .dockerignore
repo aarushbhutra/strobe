@@ -1,0 +1,8 @@
+tests/
+.github/
+ruff.toml
+.git/
+__pycache__/
+.env.example
+.pytest_cache/
+*.pyc
